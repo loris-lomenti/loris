@@ -1,0 +1,1757 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Loris — My Health Buddy</title>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300;0,9..144,500;0,9..144,700;1,9..144,300&family=DM+Sans:wght@300;400;500&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<style>
+:root {
+  --pink: #e8578a;
+  --pink-light: #f7c5d8;
+  --pink-pale: #fdf0f5;
+  --pink-deep: #c73d6e;
+  --blob: #ff8fab;
+  --cream: #fdf8f4;
+  --text: #2c1420;
+  --text-mid: #7a4a62;
+  --text-soft: #b08090;
+  --border: #f0d8e4;
+  --white: #ffffff;
+  --green: #2d9b6e;
+  --green-pale: #edfaf4;
+  --amber: #c87820;
+  --amber-pale: #fff8ed;
+  --blue: #3a6ea8;
+  --blue-pale: #edf3fb;
+  --red: #c0392b;
+  --red-pale: #fdf0f0;
+  --sidebar: 240px;
+  --radius: 16px;
+}
+
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+  font-family: 'DM Sans', sans-serif;
+  background: var(--cream);
+  color: var(--text);
+  min-height: 100vh;
+  display: flex;
+  overflow: hidden;
+  height: 100vh;
+}
+
+/* ── SIDEBAR ── */
+.sidebar {
+  width: var(--sidebar);
+  background: var(--white);
+  border-right: 1.5px solid var(--border);
+  display: flex;
+  flex-direction: column;
+  flex-shrink: 0;
+  overflow-y: auto;
+}
+
+.logo {
+  padding: 24px 20px 16px;
+  border-bottom: 1.5px solid var(--border);
+}
+
+.logo-name {
+  font-family: 'Fraunces', serif;
+  font-size: 26px;
+  color: var(--pink-deep);
+  line-height: 1;
+  margin-bottom: 2px;
+}
+
+.logo-sub {
+  font-size: 11px;
+  color: var(--text-soft);
+  letter-spacing: 0.06em;
+}
+
+.nav {
+  padding: 12px 10px;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  flex: 1;
+}
+
+.nav-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 12px;
+  border-radius: 10px;
+  cursor: pointer;
+  font-size: 13.5px;
+  color: var(--text-mid);
+  transition: all 0.15s;
+  border: none;
+  background: none;
+  width: 100%;
+  text-align: left;
+  font-family: 'DM Sans', sans-serif;
+}
+
+.nav-item:hover { background: var(--pink-pale); color: var(--pink-deep); }
+.nav-item.active { background: var(--pink-pale); color: var(--pink-deep); font-weight: 500; }
+
+.nav-icon { font-size: 17px; flex-shrink: 0; }
+
+.loris-sidebar {
+  padding: 16px;
+  border-top: 1.5px solid var(--border);
+}
+
+/* ── MAIN ── */
+.main {
+  flex: 1;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+}
+
+.topbar {
+  background: var(--white);
+  border-bottom: 1.5px solid var(--border);
+  padding: 16px 32px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-shrink: 0;
+}
+
+.page-title {
+  font-family: 'Fraunces', serif;
+  font-size: 22px;
+  color: var(--text);
+  font-weight: 500;
+}
+
+.today-badge {
+  font-family: 'DM Mono', monospace;
+  font-size: 11px;
+  color: var(--text-soft);
+  background: var(--pink-pale);
+  padding: 4px 12px;
+  border-radius: 20px;
+}
+
+.content {
+  padding: 28px 32px;
+  flex: 1;
+}
+
+/* ── PANELS ── */
+.panel { display: none; }
+.panel.active { display: block; }
+
+/* ── CARDS ── */
+.card {
+  background: var(--white);
+  border: 1.5px solid var(--border);
+  border-radius: var(--radius);
+  padding: 20px 24px;
+  margin-bottom: 16px;
+}
+
+.card-title {
+  font-family: 'Fraunces', serif;
+  font-size: 16px;
+  color: var(--text);
+  margin-bottom: 14px;
+  font-weight: 500;
+}
+
+.grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+.grid-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 16px; }
+
+/* ── LORIS CHAT ── */
+.loris-panel {
+  background: linear-gradient(135deg, #fdf0f5 0%, #fff8fb 100%);
+  border: 1.5px solid var(--pink-light);
+  border-radius: var(--radius);
+  overflow: hidden;
+  margin-bottom: 16px;
+}
+
+.loris-header {
+  background: var(--pink-deep);
+  padding: 14px 20px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.loris-avatar {
+  width: 38px; height: 38px;
+  background: rgba(255,255,255,0.2);
+  border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 20px;
+}
+
+.loris-name {
+  font-family: 'Fraunces', serif;
+  font-size: 16px;
+  color: white;
+}
+
+.loris-status {
+  font-size: 11px;
+  color: rgba(255,255,255,0.7);
+}
+
+.loris-messages {
+  padding: 16px 20px;
+  min-height: 120px;
+  max-height: 280px;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.loris-bubble {
+  background: var(--white);
+  border: 1px solid var(--pink-light);
+  border-radius: 12px 12px 12px 4px;
+  padding: 12px 16px;
+  font-size: 13.5px;
+  line-height: 1.6;
+  color: var(--text);
+  max-width: 85%;
+  align-self: flex-start;
+}
+
+.user-bubble {
+  background: var(--pink-deep);
+  color: white;
+  border-radius: 12px 12px 4px 12px;
+  padding: 10px 14px;
+  font-size: 13px;
+  max-width: 75%;
+  align-self: flex-end;
+  line-height: 1.5;
+}
+
+.loris-input-row {
+  padding: 12px 20px;
+  border-top: 1px solid var(--pink-light);
+  display: flex;
+  gap: 8px;
+}
+
+.loris-input {
+  flex: 1;
+  border: 1.5px solid var(--border);
+  border-radius: 10px;
+  padding: 9px 14px;
+  font-size: 13px;
+  font-family: 'DM Sans', sans-serif;
+  outline: none;
+  background: var(--white);
+  color: var(--text);
+}
+
+.loris-input:focus { border-color: var(--pink); }
+
+.loris-send {
+  background: var(--pink-deep);
+  color: white;
+  border: none;
+  border-radius: 10px;
+  padding: 9px 16px;
+  font-size: 13px;
+  cursor: pointer;
+  font-family: 'DM Sans', sans-serif;
+  font-weight: 500;
+}
+
+.loris-send:hover { background: var(--pink); }
+.loris-send:disabled { opacity: 0.5; cursor: not-allowed; }
+
+/* ── FORMS ── */
+.form-group { margin-bottom: 14px; }
+
+.form-label {
+  font-size: 11.5px;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--text-soft);
+  display: block;
+  margin-bottom: 5px;
+  font-weight: 500;
+}
+
+.form-input, .form-select, .form-textarea {
+  width: 100%;
+  border: 1.5px solid var(--border);
+  border-radius: 10px;
+  padding: 9px 13px;
+  font-size: 13.5px;
+  font-family: 'DM Sans', sans-serif;
+  color: var(--text);
+  background: var(--white);
+  outline: none;
+  transition: border-color 0.15s;
+}
+
+.form-input:focus, .form-select:focus, .form-textarea:focus { border-color: var(--pink); }
+.form-textarea { min-height: 80px; resize: vertical; }
+
+.btn {
+  padding: 9px 20px;
+  border-radius: 10px;
+  border: none;
+  font-size: 13px;
+  font-family: 'DM Sans', sans-serif;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+
+.btn-primary { background: var(--pink-deep); color: white; }
+.btn-primary:hover { background: var(--pink); }
+.btn-secondary { background: var(--pink-pale); color: var(--pink-deep); }
+.btn-secondary:hover { background: var(--pink-light); }
+.btn-danger { background: var(--red-pale); color: var(--red); }
+
+.btn-row { display: flex; gap: 8px; margin-top: 8px; }
+
+/* ── TAGS ── */
+.tag-row { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 6px; }
+
+.tag {
+  padding: 4px 11px;
+  border-radius: 20px;
+  font-size: 12px;
+  cursor: pointer;
+  border: 1.5px solid transparent;
+  transition: all 0.15s;
+  font-family: 'DM Sans', sans-serif;
+}
+
+.tag.inflammation { background: #fff0f0; color: #c0392b; border-color: #ffbcbc; }
+.tag.joint { background: var(--amber-pale); color: var(--amber); border-color: #ffdea0; }
+.tag.stomach { background: var(--green-pale); color: var(--green); border-color: #b8e8cc; }
+.tag.mood { background: var(--blue-pale); color: var(--blue); border-color: #c0d8f0; }
+.tag.fatigue { background: #f5f0fb; color: #6a3ea8; border-color: #d0b8f0; }
+.tag.hormonal { background: #fff8f0; color: #c06020; border-color: #f0d0a8; }
+.tag.other { background: var(--pink-pale); color: var(--pink-deep); border-color: var(--pink-light); }
+.tag.selected { opacity: 1; transform: scale(1.05); box-shadow: 0 2px 6px rgba(0,0,0,0.1); }
+
+/* ── CYCLE CALENDAR ── */
+.cycle-calendar {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 4px;
+}
+
+.cal-header {
+  text-align: center;
+  font-size: 11px;
+  font-weight: 500;
+  color: var(--text-soft);
+  padding: 4px;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+
+.cal-day {
+  aspect-ratio: 1;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 12px;
+  cursor: pointer;
+  border: 1.5px solid transparent;
+  transition: all 0.15s;
+  position: relative;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.cal-day:hover { border-color: var(--pink-light); background: var(--pink-pale); }
+.cal-day.today { border-color: var(--pink); font-weight: 600; }
+.cal-day.menstrual { background: #ffd6e0; color: #c0392b; }
+.cal-day.fertile { background: #d6f5e3; color: #1a6b3c; }
+.cal-day.ovulation { background: #a8e6c4; color: #1a6b3c; font-weight: 600; }
+.cal-day.luteal { background: #fff0d6; color: #8a5200; }
+.cal-day.logged { border-color: var(--pink-deep); }
+.cal-dot { width: 4px; height: 4px; border-radius: 50%; background: var(--pink-deep); }
+
+/* ── CYCLE LEGEND ── */
+.legend { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 12px; }
+.legend-item { display: flex; align-items: center; gap: 6px; font-size: 12px; color: var(--text-mid); }
+.legend-dot { width: 12px; height: 12px; border-radius: 3px; }
+
+/* ── LIST ITEMS ── */
+.list-item {
+  padding: 13px 0;
+  border-bottom: 1px solid var(--border);
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 12px;
+}
+
+.list-item:last-child { border-bottom: none; }
+
+.list-item-title { font-size: 14px; font-weight: 500; color: var(--text); }
+.list-item-sub { font-size: 12px; color: var(--text-soft); margin-top: 2px; line-height: 1.5; }
+
+.badge {
+  font-size: 11px;
+  padding: 3px 10px;
+  border-radius: 10px;
+  font-family: 'DM Mono', monospace;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+.badge-pink { background: var(--pink-pale); color: var(--pink-deep); }
+.badge-green { background: var(--green-pale); color: var(--green); }
+.badge-amber { background: var(--amber-pale); color: var(--amber); }
+.badge-red { background: var(--red-pale); color: var(--red); }
+.badge-blue { background: var(--blue-pale); color: var(--blue); }
+
+/* ── MOOD SCALE ── */
+.mood-scale {
+  display: flex;
+  gap: 8px;
+  margin-top: 6px;
+}
+
+.mood-btn {
+  flex: 1;
+  aspect-ratio: 1;
+  border-radius: 10px;
+  border: 1.5px solid var(--border);
+  background: var(--white);
+  font-size: 20px;
+  cursor: pointer;
+  display: flex; align-items: center; justify-content: center;
+  transition: all 0.15s;
+  max-width: 52px;
+}
+
+.mood-btn:hover, .mood-btn.selected { border-color: var(--pink); background: var(--pink-pale); transform: scale(1.1); }
+
+/* ── PAIN SCALE ── */
+.pain-scale { display: flex; gap: 4px; margin-top: 6px; flex-wrap: wrap; }
+
+.pain-btn {
+  width: 36px; height: 36px;
+  border-radius: 8px;
+  border: 1.5px solid var(--border);
+  background: var(--white);
+  font-size: 12px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.15s;
+  font-family: 'DM Mono', monospace;
+}
+
+.pain-btn:hover { border-color: var(--pink); }
+.pain-btn.selected-0, .pain-btn.selected-1, .pain-btn.selected-2 { background: #d6f5e3; border-color: var(--green); color: var(--green); }
+.pain-btn.selected-3, .pain-btn.selected-4, .pain-btn.selected-5 { background: var(--amber-pale); border-color: var(--amber); color: var(--amber); }
+.pain-btn.selected-6, .pain-btn.selected-7 { background: #ffe8d6; border-color: #c06020; color: #c06020; }
+.pain-btn.selected-8, .pain-btn.selected-9, .pain-btn.selected-10 { background: var(--red-pale); border-color: var(--red); color: var(--red); }
+
+/* ── STAT CARDS ── */
+.stat-card {
+  background: var(--white);
+  border: 1.5px solid var(--border);
+  border-radius: var(--radius);
+  padding: 16px 20px;
+}
+
+.stat-label { font-size: 11px; text-transform: uppercase; letter-spacing: 0.08em; color: var(--text-soft); margin-bottom: 4px; }
+.stat-value { font-family: 'Fraunces', serif; font-size: 28px; color: var(--pink-deep); line-height: 1; }
+.stat-sub { font-size: 12px; color: var(--text-soft); margin-top: 4px; }
+
+/* ── CHART CONTAINER ── */
+.chart-wrap { position: relative; height: 220px; }
+
+/* ── SCROLLBAR ── */
+::-webkit-scrollbar { width: 4px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: var(--pink-light); border-radius: 4px; }
+
+/* ── EMPTY STATE ── */
+.empty {
+  text-align: center;
+  padding: 32px;
+  color: var(--text-soft);
+  font-size: 13.5px;
+  font-style: italic;
+}
+
+.empty-icon { font-size: 32px; margin-bottom: 8px; }
+
+/* ── SECTION LABEL ── */
+.section-label {
+  font-size: 10.5px;
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+  color: var(--text-soft);
+  font-weight: 500;
+  margin-bottom: 12px;
+}
+
+/* ── REFILL ALERT ── */
+.refill-alert {
+  background: var(--amber-pale);
+  border: 1.5px solid #ffdea0;
+  border-radius: 10px;
+  padding: 10px 14px;
+  font-size: 13px;
+  color: var(--amber);
+  margin-bottom: 10px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+/* ── LOADING ── */
+.loading-dots::after {
+  content: '';
+  animation: dots 1.2s steps(3, end) infinite;
+}
+@keyframes dots {
+  0%   { content: ''; }
+  33%  { content: '.'; }
+  66%  { content: '..'; }
+  100% { content: '...'; }
+}
+
+/* ── TABS ── */
+.tabs { display: flex; gap: 4px; margin-bottom: 16px; background: var(--pink-pale); padding: 4px; border-radius: 10px; }
+.tab { flex: 1; padding: 8px; border-radius: 8px; border: none; background: none; font-size: 13px; font-family: 'DM Sans', sans-serif; color: var(--text-mid); cursor: pointer; transition: all 0.15s; }
+.tab.active { background: var(--white); color: var(--pink-deep); font-weight: 500; box-shadow: 0 1px 4px rgba(0,0,0,0.08); }
+
+/* ── PHASE BADGE ── */
+.phase-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 14px;
+  border-radius: 20px;
+  font-size: 13px;
+  font-weight: 500;
+  margin-bottom: 12px;
+}
+</style>
+</head>
+<body>
+
+<aside class="sidebar">
+  <div class="logo">
+    <div class="logo-name">🫧 Loris</div>
+    <div class="logo-sub">My health buddy</div>
+  </div>
+  <nav class="nav">
+    <button class="nav-item active" onclick="showPanel('dashboard')">
+      <span class="nav-icon">🏠</span> Dashboard
+    </button>
+    <button class="nav-item" onclick="showPanel('log')">
+      <span class="nav-icon">📝</span> Log Today
+    </button>
+    <button class="nav-item" onclick="showPanel('cycle')">
+      <span class="nav-icon">🌙</span> Cycle Tracker
+    </button>
+    <button class="nav-item" onclick="showPanel('symptoms')">
+      <span class="nav-icon">🩺</span> Symptoms
+    </button>
+    <button class="nav-item" onclick="showPanel('meds')">
+      <span class="nav-icon">💊</span> Medications
+    </button>
+    <button class="nav-item" onclick="showPanel('doctors')">
+      <span class="nav-icon">👩‍⚕️</span> Doctors
+    </button>
+    <button class="nav-item" onclick="showPanel('labs')">
+      <span class="nav-icon">🧪</span> Labs
+    </button>
+    <button class="nav-item" onclick="showPanel('patterns')">
+      <span class="nav-icon">📊</span> Patterns
+    </button>
+    <button class="nav-item" onclick="showPanel('loris')">
+      <span class="nav-icon">🫧</span> Talk to Loris
+    </button>
+    <button class="nav-item" onclick="showPanel('settings')">
+      <span class="nav-icon">⚙️</span> Settings
+    </button>
+  </nav>
+  <div class="loris-sidebar">
+    <div style="font-size:11px; color:var(--text-soft); margin-bottom:6px;">Loris says:</div>
+    <div id="loris-tip" style="font-size:12.5px; color:var(--text-mid); line-height:1.5; font-style:italic;">"Hi Elizabeth! I'm here whenever you need me. 🩷"</div>
+  </div>
+</aside>
+
+<div class="main">
+  <div class="topbar">
+    <div class="page-title" id="page-title">Dashboard</div>
+    <div class="today-badge" id="today-badge"></div>
+  </div>
+
+  <div class="content">
+
+    <!-- DASHBOARD -->
+    <div class="panel active" id="panel-dashboard">
+      <div class="loris-panel">
+        <div class="loris-header">
+          <div class="loris-avatar">🫧</div>
+          <div>
+            <div class="loris-name">Loris</div>
+            <div class="loris-status">Your health buddy — always here</div>
+          </div>
+        </div>
+        <div class="loris-messages" id="dashboard-loris-msg">
+          <div class="loris-bubble" id="dashboard-greeting">Loading your summary...</div>
+        </div>
+      </div>
+
+      <div class="grid-3" style="margin-bottom:16px;">
+        <div class="stat-card">
+          <div class="stat-label">Days logged</div>
+          <div class="stat-value" id="stat-days">0</div>
+          <div class="stat-sub">this month</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-label">Avg pain level</div>
+          <div class="stat-value" id="stat-pain">—</div>
+          <div class="stat-sub">last 7 days</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-label">Cycle day</div>
+          <div class="stat-value" id="stat-cycle">—</div>
+          <div class="stat-sub" id="stat-phase">set cycle date to track</div>
+        </div>
+      </div>
+
+      <div class="grid-2">
+        <div class="card">
+          <div class="card-title">Recent logs</div>
+          <div id="recent-logs"><div class="empty"><div class="empty-icon">📝</div>No logs yet — start by logging today!</div></div>
+        </div>
+        <div class="card">
+          <div class="card-title">Upcoming refills</div>
+          <div id="refill-alerts"><div class="empty"><div class="empty-icon">💊</div>Add medications to track refills</div></div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-title">Next appointments</div>
+        <div id="next-appts"><div class="empty"><div class="empty-icon">👩‍⚕️</div>Add doctors &amp; appointments to track them here</div></div>
+      </div>
+    </div>
+
+    <!-- LOG TODAY -->
+    <div class="panel" id="panel-log">
+      <div class="card">
+        <div class="card-title">How are you today?</div>
+
+        <div class="form-group">
+          <div class="form-label">Date</div>
+          <input type="date" class="form-input" id="log-date">
+        </div>
+
+        <div class="form-group">
+          <div class="form-label">Overall mood</div>
+          <div class="mood-scale">
+            <button class="mood-btn" data-mood="1" title="Terrible">😩</button>
+            <button class="mood-btn" data-mood="2" title="Bad">😔</button>
+            <button class="mood-btn" data-mood="3" title="Meh">😐</button>
+            <button class="mood-btn" data-mood="4" title="Okay">🙂</button>
+            <button class="mood-btn" data-mood="5" title="Good">😊</button>
+            <button class="mood-btn" data-mood="6" title="Great">😄</button>
+            <button class="mood-btn" data-mood="7" title="Wonderful">🥰</button>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <div class="form-label">Overall pain level (0 = none, 10 = worst)</div>
+          <div class="pain-scale" id="pain-scale">
+            <!-- generated by JS -->
+          </div>
+        </div>
+
+        <div class="form-group">
+          <div class="form-label">Symptoms today (tap to select)</div>
+          <div class="tag-row" id="symptom-tags">
+            <span class="tag inflammation" data-tag="Joint pain">Joint pain</span>
+            <span class="tag inflammation" data-tag="Swelling">Swelling</span>
+            <span class="tag inflammation" data-tag="Warmth at joints">Warmth at joints</span>
+            <span class="tag joint" data-tag="Morning stiffness">Morning stiffness</span>
+            <span class="tag joint" data-tag="Wrist pain">Wrist pain</span>
+            <span class="tag joint" data-tag="Hand pain">Hand pain</span>
+            <span class="tag joint" data-tag="Shoulder pain">Shoulder pain</span>
+            <span class="tag joint" data-tag="Hip pain">Hip pain</span>
+            <span class="tag joint" data-tag="Neck pain">Neck pain</span>
+            <span class="tag joint" data-tag="Scapula pain">Scapula pain</span>
+            <span class="tag joint" data-tag="TMJ">TMJ</span>
+            <span class="tag fatigue" data-tag="Fatigue">Fatigue</span>
+            <span class="tag fatigue" data-tag="Brain fog">Brain fog</span>
+            <span class="tag fatigue" data-tag="Poor sleep">Poor sleep</span>
+            <span class="tag fatigue" data-tag="Night sweats">Night sweats</span>
+            <span class="tag mood" data-tag="Anxiety">Anxiety</span>
+            <span class="tag mood" data-tag="Low mood">Low mood</span>
+            <span class="tag mood" data-tag="Irritability">Irritability</span>
+            <span class="tag mood" data-tag="Dissociation">Dissociation</span>
+            <span class="tag hormonal" data-tag="Cramping">Cramping</span>
+            <span class="tag hormonal" data-tag="Bloating">Bloating</span>
+            <span class="tag hormonal" data-tag="Breast tenderness">Breast tenderness</span>
+            <span class="tag hormonal" data-tag="Dryness">Dryness</span>
+            <span class="tag stomach" data-tag="Nausea">Nausea</span>
+            <span class="tag stomach" data-tag="Stomach pain">Stomach pain</span>
+            <span class="tag stomach" data-tag="Digestive issues">Digestive issues</span>
+            <span class="tag other" data-tag="Globus sensation">Globus sensation</span>
+            <span class="tag other" data-tag="Headache">Headache</span>
+            <span class="tag other" data-tag="Cold sensitivity">Cold sensitivity</span>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <div class="form-label">Cycle phase today</div>
+          <select class="form-select" id="log-phase">
+            <option value="">— not tracking —</option>
+            <option value="menstrual">🔴 Menstrual</option>
+            <option value="follicular">🟡 Follicular</option>
+            <option value="ovulation">🟢 Ovulation</option>
+            <option value="luteal">🟠 Luteal</option>
+          </select>
+        </div>
+
+        <div class="form-group">
+          <div class="form-label">Notes (anything else going on)</div>
+          <textarea class="form-textarea" id="log-notes" placeholder="e.g. Wrists really bad today, cold weather. Slept well though. Took ibuprofen at noon."></textarea>
+        </div>
+
+        <div class="btn-row">
+          <button class="btn btn-primary" onclick="saveLog()">Save today's log 🩷</button>
+          <button class="btn btn-secondary" onclick="clearLogForm()">Clear</button>
+        </div>
+      </div>
+
+      <div id="log-saved-msg" style="display:none;" class="refill-alert">✓ Log saved! Loris has your data.</div>
+    </div>
+
+    <!-- CYCLE TRACKER -->
+    <div class="panel" id="panel-cycle">
+      <div class="grid-2" style="align-items:start;">
+        <div>
+          <div class="card">
+            <div class="card-title">Cycle settings</div>
+            <div class="form-group">
+              <div class="form-label">Last period start date</div>
+              <input type="date" class="form-input" id="cycle-start">
+            </div>
+            <div class="form-group">
+              <div class="form-label">Average cycle length (days)</div>
+              <input type="number" class="form-input" id="cycle-length" value="28" min="21" max="45">
+            </div>
+            <div class="form-group">
+              <div class="form-label">Average period length (days)</div>
+              <input type="number" class="form-input" id="period-length" value="5" min="2" max="10">
+            </div>
+            <button class="btn btn-primary" onclick="saveCycleSettings()">Update cycle 🌙</button>
+          </div>
+
+          <div class="card">
+            <div class="card-title">Current phase</div>
+            <div id="current-phase-info"><div class="empty">Set your cycle start date to see your current phase.</div></div>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="card-title">This month</div>
+          <div class="cycle-calendar" id="cycle-calendar"></div>
+          <div class="legend">
+            <div class="legend-item"><div class="legend-dot" style="background:#ffd6e0"></div> Menstrual</div>
+            <div class="legend-item"><div class="legend-dot" style="background:#fff9db"></div> Follicular</div>
+            <div class="legend-item"><div class="legend-dot" style="background:#a8e6c4"></div> Ovulation</div>
+            <div class="legend-item"><div class="legend-dot" style="background:#fff0d6"></div> Luteal</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- SYMPTOMS -->
+    <div class="panel" id="panel-symptoms">
+      <div class="card">
+        <div class="card-title">All logged symptoms</div>
+        <div id="symptoms-summary"><div class="empty"><div class="empty-icon">🩺</div>Start logging daily to see your symptom history here.</div></div>
+      </div>
+    </div>
+
+    <!-- MEDICATIONS -->
+    <div class="panel" id="panel-meds">
+      <div class="card">
+        <div class="card-title">Add medication</div>
+        <div class="grid-2">
+          <div class="form-group">
+            <div class="form-label">Medication name</div>
+            <input type="text" class="form-input" id="med-name" placeholder="e.g. Semaglutide">
+          </div>
+          <div class="form-group">
+            <div class="form-label">Dose</div>
+            <input type="text" class="form-input" id="med-dose" placeholder="e.g. 0.5mg weekly">
+          </div>
+          <div class="form-group">
+            <div class="form-label">Type</div>
+            <select class="form-select" id="med-type">
+              <option value="prescribed">Prescribed</option>
+              <option value="otc">OTC</option>
+              <option value="supplement">Supplement</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <div class="form-label">Refill due date</div>
+            <input type="date" class="form-input" id="med-refill">
+          </div>
+          <div class="form-group">
+            <div class="form-label">Pharmacy / how to refill</div>
+            <input type="text" class="form-input" id="med-pharmacy" placeholder="e.g. CVS app, call doctor">
+          </div>
+          <div class="form-group">
+            <div class="form-label">Notes</div>
+            <input type="text" class="form-input" id="med-notes-input" placeholder="e.g. take with food">
+          </div>
+        </div>
+        <button class="btn btn-primary" onclick="saveMed()">Add medication 💊</button>
+      </div>
+
+      <div class="card">
+        <div class="card-title">My medications</div>
+        <div id="med-list"><div class="empty"><div class="empty-icon">💊</div>No medications added yet.</div></div>
+      </div>
+    </div>
+
+    <!-- DOCTORS -->
+    <div class="panel" id="panel-doctors">
+      <div class="card">
+        <div class="card-title">Add provider</div>
+        <div class="grid-2">
+          <div class="form-group">
+            <div class="form-label">Provider name</div>
+            <input type="text" class="form-input" id="doc-name" placeholder="e.g. Dr. Lasongia Morton">
+          </div>
+          <div class="form-group">
+            <div class="form-label">Specialty</div>
+            <input type="text" class="form-input" id="doc-specialty" placeholder="e.g. Primary Care, Rheumatology">
+          </div>
+          <div class="form-group">
+            <div class="form-label">Phone</div>
+            <input type="text" class="form-input" id="doc-phone" placeholder="(850) 000-0000">
+          </div>
+          <div class="form-group">
+            <div class="form-label">Next appointment</div>
+            <input type="datetime-local" class="form-input" id="doc-appt">
+          </div>
+          <div class="form-group">
+            <div class="form-label">Portal / how to message</div>
+            <input type="text" class="form-input" id="doc-portal" placeholder="e.g. MDLive app, MyChart">
+          </div>
+          <div class="form-group">
+            <div class="form-label">Notes</div>
+            <input type="text" class="form-input" id="doc-notes-input" placeholder="e.g. ordered my ANA labs">
+          </div>
+        </div>
+        <button class="btn btn-primary" onclick="saveDoctor()">Add provider 👩‍⚕️</button>
+      </div>
+
+      <div class="card">
+        <div class="card-title">My providers</div>
+        <div id="doc-list"><div class="empty"><div class="empty-icon">👩‍⚕️</div>No providers added yet.</div></div>
+      </div>
+    </div>
+
+    <!-- LABS -->
+    <div class="panel" id="panel-labs">
+      <div class="card">
+        <div class="card-title">Add lab result</div>
+        <div class="grid-2">
+          <div class="form-group">
+            <div class="form-label">Test name</div>
+            <input type="text" class="form-input" id="lab-name" placeholder="e.g. ANA Screen">
+          </div>
+          <div class="form-group">
+            <div class="form-label">Result</div>
+            <input type="text" class="form-input" id="lab-result" placeholder="e.g. POSITIVE / 1:40">
+          </div>
+          <div class="form-group">
+            <div class="form-label">Reference range</div>
+            <input type="text" class="form-input" id="lab-ref" placeholder="e.g. NEGATIVE">
+          </div>
+          <div class="form-group">
+            <div class="form-label">Date collected</div>
+            <input type="date" class="form-input" id="lab-date">
+          </div>
+          <div class="form-group">
+            <div class="form-label">Status</div>
+            <select class="form-select" id="lab-status">
+              <option value="normal">Normal ✓</option>
+              <option value="abnormal">Abnormal ⚠</option>
+              <option value="pending">Pending...</option>
+              <option value="critical">Critical !</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <div class="form-label">Notes</div>
+            <input type="text" class="form-input" id="lab-notes-input" placeholder="e.g. follow-up needed">
+          </div>
+        </div>
+        <button class="btn btn-primary" onclick="saveLab()">Add result 🧪</button>
+      </div>
+
+      <div class="card">
+        <div class="card-title">Lab history</div>
+        <div id="lab-list"><div class="empty"><div class="empty-icon">🧪</div>No lab results added yet.</div></div>
+      </div>
+    </div>
+
+    <!-- PATTERNS -->
+    <div class="panel" id="panel-patterns">
+      <div class="tabs">
+        <button class="tab active" onclick="switchPatternTab('charts')">📊 Charts</button>
+        <button class="tab" onclick="switchPatternTab('calendar')">📅 Calendar</button>
+        <button class="tab" onclick="switchPatternTab('insights')">✨ Insights</button>
+      </div>
+
+      <div id="pattern-charts">
+        <div class="card">
+          <div class="card-title">Pain levels over time</div>
+          <div class="chart-wrap"><canvas id="pain-chart"></canvas></div>
+        </div>
+        <div class="card">
+          <div class="card-title">Mood over time</div>
+          <div class="chart-wrap"><canvas id="mood-chart"></canvas></div>
+        </div>
+        <div class="card">
+          <div class="card-title">Top symptoms this month</div>
+          <div id="top-symptoms-chart" class="chart-wrap"><canvas id="symptom-bar-chart"></canvas></div>
+        </div>
+      </div>
+
+      <div id="pattern-calendar" style="display:none;">
+        <div class="card">
+          <div class="card-title">Log calendar</div>
+          <div class="cycle-calendar" id="log-calendar"></div>
+          <div class="legend">
+            <div class="legend-item"><div class="legend-dot" style="background:#ffd6e0"></div> High pain (7-10)</div>
+            <div class="legend-item"><div class="legend-dot" style="background:#fff0d6"></div> Moderate pain (4-6)</div>
+            <div class="legend-item"><div class="legend-dot" style="background:#d6f5e3"></div> Low pain (0-3)</div>
+            <div class="legend-item"><div class="legend-dot" style="background:var(--border)"></div> No log</div>
+          </div>
+        </div>
+      </div>
+
+      <div id="pattern-insights" style="display:none;">
+        <div class="loris-panel">
+          <div class="loris-header">
+            <div class="loris-avatar">🫧</div>
+            <div>
+              <div class="loris-name">Loris — Pattern Analysis</div>
+              <div class="loris-status">Reading your data...</div>
+            </div>
+          </div>
+          <div class="loris-messages" id="pattern-loris-msg">
+            <div class="loris-bubble" id="pattern-analysis">Click "Analyze my patterns" to get Loris's read on your data.</div>
+          </div>
+          <div class="loris-input-row">
+            <button class="btn btn-primary" onclick="analyzePatterns()" style="width:100%;">✨ Analyze my patterns</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- TALK TO LORIS -->
+    <div class="panel" id="panel-loris">
+      <div class="loris-panel" style="margin-bottom:0;">
+        <div class="loris-header">
+          <div class="loris-avatar">🫧</div>
+          <div>
+            <div class="loris-name">Loris</div>
+            <div class="loris-status">Warm · Clinical · Honest · Always here</div>
+          </div>
+        </div>
+        <div class="loris-messages" id="loris-chat-messages" style="max-height:440px;">
+          <div class="loris-bubble">Hi Elizabeth! 🩷 I'm Loris — your health buddy. I know your full history, your labs, your symptom patterns, and I'm here to help you make sense of it all. I can be gentle, clinical, or snarky depending on what you need. What's on your mind today?</div>
+        </div>
+        <div class="loris-input-row">
+          <input type="text" class="loris-input" id="loris-input" placeholder="Ask me anything about your health..." onkeydown="if(event.key==='Enter') sendToLoris()">
+          <button class="loris-send" onclick="sendToLoris()" id="loris-send-btn">Send</button>
+        </div>
+      </div>
+      <div style="margin-top:12px; display:flex; flex-wrap:wrap; gap:8px;">
+        <div class="section-label" style="width:100%; margin-bottom:4px;">Quick prompts</div>
+        <button class="btn btn-secondary" onclick="quickPrompt('How have my symptoms been this week?')">This week's symptoms</button>
+        <button class="btn btn-secondary" onclick="quickPrompt('What patterns do you see in my pain and cycle?')">Pain + cycle patterns</button>
+        <button class="btn btn-secondary" onclick="quickPrompt('What should I tell Dr. Morton on Friday?')">Dr. Morton prep</button>
+        <button class="btn btn-secondary" onclick="quickPrompt('Am I due for any refills?')">Refill check</button>
+        <button class="btn btn-secondary" onclick="quickPrompt('What tests am I still waiting for?')">Pending tests</button>
+        <button class="btn btn-secondary" onclick="quickPrompt('Tell me something encouraging about my health progress.')">Encourage me 🩷</button>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<!-- FIRST RUN SETUP OVERLAY -->
+<div id="setup-overlay" style="display:none; position:fixed; inset:0; background:linear-gradient(135deg,#fdf0f5,#fff8fb); z-index:1000; overflow-y:auto; padding:40px 24px;">
+  <div style="max-width:520px; margin:0 auto;">
+    <div style="text-align:center; margin-bottom:32px;">
+      <div style="font-size:64px; margin-bottom:12px;">🫧</div>
+      <div style="font-family:'Fraunces',serif; font-size:32px; color:var(--pink-deep); margin-bottom:6px;">Hi, I'm Loris!</div>
+      <div style="font-size:15px; color:var(--text-mid); line-height:1.6;">Your personal health buddy. Let's get you set up — your data stays on YOUR device and never goes anywhere you don't send it.</div>
+    </div>
+
+    <div class="card">
+      <div class="card-title">About you</div>
+      <div class="form-group">
+        <div class="form-label">Your first name</div>
+        <input type="text" class="form-input" id="setup-name" placeholder="e.g. Elizabeth">
+      </div>
+      <div class="grid-2">
+        <div class="form-group">
+          <div class="form-label">Age</div>
+          <input type="number" class="form-input" id="setup-age" placeholder="37">
+        </div>
+        <div class="form-group">
+          <div class="form-label">Insurance</div>
+          <input type="text" class="form-input" id="setup-insurance" placeholder="e.g. Cigna">
+        </div>
+      </div>
+      <div class="form-group">
+        <div class="form-label">City / location</div>
+        <input type="text" class="form-input" id="setup-location" placeholder="e.g. Tallahassee, FL">
+      </div>
+      <div class="form-group">
+        <div class="form-label">Emergency contact (optional)</div>
+        <input type="text" class="form-input" id="setup-emergency" placeholder="e.g. John, husband — (850) 555-0000">
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-title">Your health picture</div>
+      <div style="font-size:13px; color:var(--text-soft); margin-bottom:12px; line-height:1.6;">Tell Loris about your health history, diagnoses, symptoms, and anything important. The more detail you give, the more helpful she'll be. You can always edit this later in Settings.</div>
+      <div class="form-group">
+        <div class="form-label">Health notes — diagnoses, symptoms, history, medications</div>
+        <textarea class="form-textarea" id="setup-health" style="min-height:160px;" placeholder="e.g. Suspected RA and Sjögren's syndrome. Positive ANA Dec 2024. PMDD on Zoloft + Yaz. C-PTSD. Taking semaglutide (80lb loss), atorvastatin, algae omega-3s. Grandfather had RA. Appointment with Dr. Morton May 29..."></textarea>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-title">Your personal pain scale (optional but powerful)</div>
+      <div style="font-size:13px; color:var(--text-soft); margin-bottom:12px; line-height:1.6;">Describe what pain levels mean FOR YOU so Loris interprets your ratings correctly.</div>
+      <textarea class="form-textarea" id="setup-pain" style="min-height:120px;" placeholder="e.g. My 10/10 experiences: ruptured ovarian cyst, kidney stone, 48hr labor + 3rd degree tear, Bartholin's drainage. I have very high pain tolerance. A 7-8 for me means 'oh holy shit ow' — genuinely significant."></textarea>
+    </div>
+
+    <div style="text-align:center; margin-top:8px;">
+      <button class="btn btn-primary" style="width:100%; padding:14px; font-size:15px;" onclick="completeSetup()">Meet Loris 🫧</button>
+      <div style="font-size:11px; color:var(--text-soft); margin-top:10px;">Your data is stored locally in your browser. Nothing is sent anywhere except to Loris's AI when you chat with her.</div>
+    </div>
+  </div>
+</div>
+
+<!-- SETTINGS PANEL -->
+<div class="panel" id="panel-settings">
+  <div class="card">
+    <div class="card-title">Your profile</div>
+    <div class="grid-2">
+      <div class="form-group">
+        <div class="form-label">Name</div>
+        <input type="text" class="form-input" id="settings-name">
+      </div>
+      <div class="form-group">
+        <div class="form-label">Age</div>
+        <input type="number" class="form-input" id="settings-age">
+      </div>
+      <div class="form-group">
+        <div class="form-label">Insurance</div>
+        <input type="text" class="form-input" id="settings-insurance">
+      </div>
+      <div class="form-group">
+        <div class="form-label">Location</div>
+        <input type="text" class="form-input" id="settings-location">
+      </div>
+    </div>
+    <div class="form-group">
+      <div class="form-label">Emergency contact</div>
+      <input type="text" class="form-input" id="settings-emergency">
+    </div>
+    <div class="form-group">
+      <div class="form-label">Health notes — diagnoses, symptoms, history, medications</div>
+      <textarea class="form-textarea" style="min-height:200px;" id="settings-health"></textarea>
+    </div>
+    <div class="form-group">
+      <div class="form-label">Personal pain scale</div>
+      <textarea class="form-textarea" style="min-height:100px;" id="settings-pain"></textarea>
+    </div>
+    <div class="btn-row">
+      <button class="btn btn-primary" onclick="saveSettings()">Save settings</button>
+      <button class="btn btn-danger" onclick="if(confirm('Reset ALL Loris data? This cannot be undone.')) resetAll()">Reset all data</button>
+    </div>
+    <div id="settings-saved" style="display:none; margin-top:8px;" class="refill-alert">✓ Settings saved! Loris is updated.</div>
+  </div>
+</div>
+// ── DATA HELPERS ──
+const getData = (key, def=[]) => { try { const v = window._store?.[key]; return v !== undefined ? v : def; } catch(e) { return def; } };
+const setData = async (key, val) => { if (!window._store) window._store = {}; window._store[key] = val; try { await window.storage?.set(key, JSON.stringify(val)); } catch(e){} };
+const loadStore = async () => {
+  if (!window._store) window._store = {};
+  const keys = ['logs','meds','doctors','labs','cycle'];
+  for (const k of keys) {
+    try {
+      const r = await window.storage?.get(k);
+      if (r?.value) window._store[k] = JSON.parse(r.value);
+    } catch(e){}
+  }
+};
+
+// ── INIT ──
+const today = new Date();
+const todayStr = today.toISOString().split('T')[0];
+
+document.getElementById('today-badge').textContent = today.toLocaleDateString('en-US', {weekday:'long', month:'long', day:'numeric', year:'numeric'});
+document.getElementById('log-date').value = todayStr;
+document.getElementById('lab-date').value = todayStr;
+
+// Pain scale
+const ps = document.getElementById('pain-scale');
+for(let i=0;i<=10;i++){
+  const b=document.createElement('button');
+  b.className='pain-btn'; b.textContent=i; b.dataset.pain=i;
+  b.onclick=()=>{
+    document.querySelectorAll('.pain-btn').forEach(x=>x.className='pain-btn');
+    b.className=`pain-btn selected-${i}`;
+    window._selectedPain=i;
+  };
+  ps.appendChild(b);
+}
+
+// Mood buttons
+document.querySelectorAll('.mood-btn').forEach(b=>{
+  b.onclick=()=>{
+    document.querySelectorAll('.mood-btn').forEach(x=>x.classList.remove('selected'));
+    b.classList.add('selected');
+    window._selectedMood=parseInt(b.dataset.mood);
+  };
+});
+
+// Symptom tags
+document.querySelectorAll('#symptom-tags .tag').forEach(t=>{
+  t.onclick=()=>t.classList.toggle('selected');
+});
+
+// ── NAV ──
+function showPanel(id) {
+  document.querySelectorAll('.panel').forEach(p=>p.classList.remove('active'));
+  document.querySelectorAll('.nav-item').forEach(n=>n.classList.remove('active'));
+  document.getElementById('panel-'+id).classList.add('active');
+  event.currentTarget.classList.add('active');
+  const titles = {dashboard:'Dashboard',log:'Log Today',cycle:'Cycle Tracker',symptoms:'Symptom History',meds:'Medications',doctors:'My Providers',labs:'Lab Results',patterns:'Pattern View',loris:'Talk to Loris'};
+  document.getElementById('page-title').textContent = titles[id]||id;
+  if(id==='dashboard') refreshDashboard();
+  if(id==='patterns') { renderCharts(); renderLogCalendar(); }
+  if(id==='symptoms') renderSymptomHistory();
+  if(id==='meds') renderMeds();
+  if(id==='doctors') renderDoctors();
+  if(id==='labs') renderLabs();
+  if(id==='cycle') renderCycleCalendar();
+}
+
+// ── LOG ──
+function saveLog() {
+  const logs = getData('logs');
+  const date = document.getElementById('log-date').value;
+  const symptoms = [...document.querySelectorAll('#symptom-tags .tag.selected')].map(t=>t.dataset.tag);
+  const entry = {
+    date, mood: window._selectedMood||null,
+    pain: window._selectedPain!==undefined?window._selectedPain:null,
+    symptoms, phase: document.getElementById('log-phase').value,
+    notes: document.getElementById('log-notes').value, ts: Date.now()
+  };
+  const existing = logs.findIndex(l=>l.date===date);
+  if(existing>=0) logs[existing]=entry; else logs.unshift(entry);
+  setData('logs', logs);
+  document.getElementById('log-saved-msg').style.display='flex';
+  setTimeout(()=>document.getElementById('log-saved-msg').style.display='none',3000);
+  refreshDashboard();
+  updateLorisTip();
+}
+
+function clearLogForm() {
+  document.getElementById('log-notes').value='';
+  document.querySelectorAll('.mood-btn').forEach(b=>b.classList.remove('selected'));
+  document.querySelectorAll('.pain-btn').forEach(b=>b.className='pain-btn');
+  document.querySelectorAll('#symptom-tags .tag').forEach(t=>t.classList.remove('selected'));
+  document.getElementById('log-phase').value='';
+  window._selectedMood=null; window._selectedPain=undefined;
+}
+
+// ── DASHBOARD REFRESH ──
+function refreshDashboard() {
+  const logs = getData('logs');
+  const meds = getData('meds');
+  const doctors = getData('doctors');
+
+  // Stats
+  const thisMonth = logs.filter(l=>l.date&&l.date.startsWith(todayStr.slice(0,7)));
+  document.getElementById('stat-days').textContent = thisMonth.length;
+
+  const last7 = logs.filter(l=>{
+    const d=new Date(l.date); const diff=(today-d)/(1000*60*60*24);
+    return diff<=7 && l.pain!==null && l.pain!==undefined;
+  });
+  if(last7.length) {
+    const avg=(last7.reduce((s,l)=>s+l.pain,0)/last7.length).toFixed(1);
+    document.getElementById('stat-pain').textContent=avg;
+  }
+
+  // Cycle day
+  const cycle = getData('cycle', {});
+  if(cycle.start) {
+    const start=new Date(cycle.start);
+    const diff=Math.floor((today-start)/(1000*60*60*24));
+    const len=cycle.length||28;
+    const day=(diff%len)+1;
+    document.getElementById('stat-cycle').textContent='Day '+day;
+    const phase=getCyclePhase(day,cycle);
+    document.getElementById('stat-phase').textContent=phase.label;
+  }
+
+  // Recent logs
+  const rl=document.getElementById('recent-logs');
+  if(!logs.length){rl.innerHTML='<div class="empty"><div class="empty-icon">📝</div>No logs yet!</div>';return;}
+  rl.innerHTML=logs.slice(0,4).map(l=>`
+    <div class="list-item">
+      <div>
+        <div class="list-item-title">${formatDate(l.date)}</div>
+        <div class="list-item-sub">${l.symptoms?.slice(0,3).join(', ')||'No symptoms logged'}${l.symptoms?.length>3?` +${l.symptoms.length-3} more`:''}</div>
+      </div>
+      <div style="display:flex;gap:6px;flex-shrink:0;">
+        ${l.pain!==null&&l.pain!==undefined?`<span class="badge ${painBadgeClass(l.pain)}">Pain ${l.pain}</span>`:''}
+        ${l.mood?`<span class="badge badge-pink">${moodEmoji(l.mood)}</span>`:''}
+      </div>
+    </div>`).join('');
+
+  // Refills
+  const ra=document.getElementById('refill-alerts');
+  const soon=meds.filter(m=>{
+    if(!m.refill) return false;
+    const diff=(new Date(m.refill)-today)/(1000*60*60*24);
+    return diff<=14;
+  });
+  if(!soon.length){ra.innerHTML='<div class="empty"><div class="empty-icon">✓</div>No refills due soon!</div>';}
+  else ra.innerHTML=soon.map(m=>`<div class="refill-alert">💊 <strong>${m.name}</strong> — refill due ${formatDate(m.refill)} · ${m.pharmacy||'check pharmacy'}</div>`).join('');
+
+  // Appointments
+  const na=document.getElementById('next-appts');
+  const upcoming=doctors.filter(d=>d.appt&&new Date(d.appt)>today).sort((a,b)=>new Date(a.appt)-new Date(b.appt));
+  if(!upcoming.length){na.innerHTML='<div class="empty"><div class="empty-icon">📅</div>No upcoming appointments</div>';}
+  else na.innerHTML=upcoming.slice(0,3).map(d=>`
+    <div class="list-item">
+      <div>
+        <div class="list-item-title">${d.name}</div>
+        <div class="list-item-sub">${d.specialty||''} · ${d.phone||''}</div>
+      </div>
+      <span class="badge badge-blue">${formatDateTime(d.appt)}</span>
+    </div>`).join('');
+
+  // Loris greeting
+  generateDashboardGreeting(logs, cycle);
+}
+
+function generateDashboardGreeting(logs, cycle) {
+  const el = document.getElementById('dashboard-greeting');
+  const hour = today.getHours();
+  const greet = hour<12?'Good morning':'hour<17?Good afternoon':'Good evening';
+  const lastLog = logs[0];
+  let msg = `${greet}, Elizabeth! 🩷 `;
+  if(!lastLog) { msg+="I don't have any logs yet — start by logging today so I can start learning your patterns!"; }
+  else {
+    const daysSince = Math.floor((today-new Date(lastLog.date))/(1000*60*60*24));
+    if(daysSince===0) msg+="You logged today — ";
+    else if(daysSince===1) msg+="You logged yesterday — ";
+    else msg+=`Last log was ${daysSince} days ago — `;
+    if(lastLog.pain>=7) msg+="your pain was pretty rough. I'm sorry. 🩷 ";
+    else if(lastLog.pain>=4) msg+="moderate pain day. ";
+    else if(lastLog.pain!==null&&lastLog.pain!==undefined) msg+="pain was manageable. ";
+    if(cycle.start) {
+      const day=getCyclePhaseToday(cycle);
+      msg+=`You're on cycle day ${day.day} — ${day.label}. `;
+    }
+    msg+="How are you feeling today?";
+  }
+  el.textContent=msg;
+}
+
+// ── CYCLE ──
+function saveCycleSettings() {
+  const c={start:document.getElementById('cycle-start').value, length:parseInt(document.getElementById('cycle-length').value)||28, periodLen:parseInt(document.getElementById('period-length').value)||5};
+  setData('cycle',c);
+  renderCycleCalendar();
+  refreshDashboard();
+}
+
+function getCyclePhase(day, cycle) {
+  const len=cycle.length||28, pl=cycle.periodLen||5;
+  const ovDay=Math.round(len*0.5);
+  if(day<=pl) return {label:'Menstrual 🔴',class:'menstrual',color:'#ffd6e0'};
+  if(day<ovDay-1) return {label:'Follicular 🟡',class:'follicular',color:'#fff9db'};
+  if(day===ovDay-1||day===ovDay) return {label:'Ovulation 🟢',class:'ovulation',color:'#a8e6c4'};
+  return {label:'Luteal 🟠',class:'luteal',color:'#fff0d6'};
+}
+
+function getCyclePhaseToday(cycle) {
+  const start=new Date(cycle.start);
+  const diff=Math.floor((today-start)/(1000*60*60*24));
+  const len=cycle.length||28;
+  const day=(diff%len)+1;
+  return {day, ...getCyclePhase(day,cycle)};
+}
+
+function renderCycleCalendar() {
+  const cal=document.getElementById('cycle-calendar');
+  const cycle=getData('cycle',{});
+  const logs=getData('logs');
+  const year=today.getFullYear(), month=today.getMonth();
+  const firstDay=new Date(year,month,1).getDay();
+  const daysInMonth=new Date(year,month+1,0).getDate();
+  const days=['Su','Mo','Tu','We','Th','Fr','Sa'];
+  cal.innerHTML=days.map(d=>`<div class="cal-header">${d}</div>`).join('');
+  for(let i=0;i<firstDay;i++) cal.innerHTML+=`<div></div>`;
+  for(let d=1;d<=daysInMonth;d++){
+    const dateStr=`${year}-${String(month+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
+    const isToday=dateStr===todayStr;
+    const hasLog=logs.find(l=>l.date===dateStr);
+    let phaseClass='';
+    if(cycle.start) {
+      const start=new Date(cycle.start);
+      const diff=Math.floor((new Date(dateStr)-start)/(1000*60*60*24));
+      if(diff>=0){const day=(diff%(cycle.length||28))+1; phaseClass=getCyclePhase(day,cycle).class;}
+    }
+    cal.innerHTML+=`<div class="cal-day ${phaseClass} ${isToday?'today':''}" title="${dateStr}">
+      ${d}${hasLog?'<div class="cal-dot"></div>':''}
+    </div>`;
+  }
+
+  // Current phase info
+  const info=document.getElementById('current-phase-info');
+  if(cycle.start){
+    const p=getCyclePhaseToday(cycle);
+    info.innerHTML=`<div class="phase-badge" style="background:${p.color||'var(--pink-pale)'};color:var(--text);">${p.label} — Day ${p.day}</div>
+    <div style="font-size:13.5px;color:var(--text-mid);line-height:1.7;">${phaseDescription(p.class)}</div>`;
+  }
+}
+
+function phaseDescription(phase) {
+  const d={
+    menstrual:'Estrogen and progesterone are low. You may feel more fatigued and pain may be heightened. Rest is valid.',
+    follicular:'Estrogen rising — energy often improves. A good time for doctor appointments and new tasks.',
+    ovulation:'Peak estrogen. Many people feel their best. Inflammation can sometimes spike around ovulation.',
+    luteal:'Progesterone dominant. This is where PMDD symptoms can emerge. Fatigue and joint pain may increase in the late luteal phase. Be extra gentle with yourself.'
+  };
+  return d[phase]||'';
+}
+
+// ── MEDS ──
+function saveMed() {
+  const meds=getData('meds');
+  meds.unshift({id:Date.now(), name:document.getElementById('med-name').value, dose:document.getElementById('med-dose').value, type:document.getElementById('med-type').value, refill:document.getElementById('med-refill').value, pharmacy:document.getElementById('med-pharmacy').value, notes:document.getElementById('med-notes-input').value});
+  setData('meds',meds);
+  ['med-name','med-dose','med-refill','med-pharmacy','med-notes-input'].forEach(id=>document.getElementById(id).value='');
+  renderMeds();
+}
+
+function renderMeds() {
+  const meds=getData('meds');
+  const el=document.getElementById('med-list');
+  if(!meds.length){el.innerHTML='<div class="empty"><div class="empty-icon">💊</div>No medications yet.</div>';return;}
+  el.innerHTML=meds.map(m=>`
+    <div class="list-item">
+      <div>
+        <div class="list-item-title">${m.name} ${m.dose?`— ${m.dose}`:''}</div>
+        <div class="list-item-sub">${m.pharmacy?`Refill: ${m.pharmacy}`:''}${m.refill?` · Due: ${formatDate(m.refill)}`:''}${m.notes?` · ${m.notes}`:''}</div>
+      </div>
+      <div style="display:flex;gap:6px;align-items:center;">
+        <span class="badge ${m.type==='prescribed'?'badge-pink':m.type==='supplement'?'badge-green':'badge-blue'}">${m.type}</span>
+        <button class="btn btn-danger" style="padding:4px 10px;font-size:11px;" onclick="deleteMed(${m.id})">×</button>
+      </div>
+    </div>`).join('');
+}
+
+function deleteMed(id) { setData('meds',getData('meds').filter(m=>m.id!==id)); renderMeds(); }
+
+// ── DOCTORS ──
+function saveDoctor() {
+  const doctors=getData('doctors');
+  doctors.unshift({id:Date.now(), name:document.getElementById('doc-name').value, specialty:document.getElementById('doc-specialty').value, phone:document.getElementById('doc-phone').value, appt:document.getElementById('doc-appt').value, portal:document.getElementById('doc-portal').value, notes:document.getElementById('doc-notes-input').value});
+  setData('doctors',doctors);
+  ['doc-name','doc-specialty','doc-phone','doc-appt','doc-portal','doc-notes-input'].forEach(id=>document.getElementById(id).value='');
+  renderDoctors();
+}
+
+function renderDoctors() {
+  const doctors=getData('doctors');
+  const el=document.getElementById('doc-list');
+  if(!doctors.length){el.innerHTML='<div class="empty"><div class="empty-icon">👩‍⚕️</div>No providers yet.</div>';return;}
+  el.innerHTML=doctors.map(d=>`
+    <div class="list-item">
+      <div>
+        <div class="list-item-title">${d.name}</div>
+        <div class="list-item-sub">${d.specialty||''}${d.phone?` · ${d.phone}`:''}${d.portal?` · ${d.portal}`:''}${d.notes?` · ${d.notes}`:''}</div>
+        ${d.appt?`<div class="list-item-sub" style="color:var(--blue);">📅 ${formatDateTime(d.appt)}</div>`:''}
+      </div>
+      <button class="btn btn-danger" style="padding:4px 10px;font-size:11px;" onclick="deleteDoctor(${d.id})">×</button>
+    </div>`).join('');
+}
+
+function deleteDoctor(id) { setData('doctors',getData('doctors').filter(d=>d.id!==id)); renderDoctors(); }
+
+// ── LABS ──
+function saveLab() {
+  const labs=getData('labs');
+  labs.unshift({id:Date.now(), name:document.getElementById('lab-name').value, result:document.getElementById('lab-result').value, ref:document.getElementById('lab-ref').value, date:document.getElementById('lab-date').value, status:document.getElementById('lab-status').value, notes:document.getElementById('lab-notes-input').value});
+  setData('labs',labs);
+  ['lab-name','lab-result','lab-ref','lab-notes-input'].forEach(id=>document.getElementById(id).value='');
+  document.getElementById('lab-date').value=todayStr;
+  renderLabs();
+}
+
+function renderLabs() {
+  const labs=getData('labs');
+  const el=document.getElementById('lab-list');
+  if(!labs.length){el.innerHTML='<div class="empty"><div class="empty-icon">🧪</div>No lab results yet.</div>';return;}
+  const statusBadge={normal:'badge-green',abnormal:'badge-amber',pending:'badge-blue',critical:'badge-red'};
+  el.innerHTML=labs.map(l=>`
+    <div class="list-item">
+      <div>
+        <div class="list-item-title">${l.name}</div>
+        <div class="list-item-sub">Result: <strong>${l.result}</strong>${l.ref?` · Ref: ${l.ref}`:''}${l.date?` · ${formatDate(l.date)}`:''}${l.notes?` · ${l.notes}`:''}</div>
+      </div>
+      <div style="display:flex;gap:6px;align-items:center;">
+        <span class="badge ${statusBadge[l.status]||'badge-blue'}">${l.status}</span>
+        <button class="btn btn-danger" style="padding:4px 10px;font-size:11px;" onclick="deleteLab(${l.id})">×</button>
+      </div>
+    </div>`).join('');
+}
+
+function deleteLab(id) { setData('labs',getData('labs').filter(l=>l.id!==id)); renderLabs(); }
+
+// ── SYMPTOMS ──
+function renderSymptomHistory() {
+  const logs=getData('logs');
+  const el=document.getElementById('symptoms-summary');
+  if(!logs.length){el.innerHTML='<div class="empty"><div class="empty-icon">🩺</div>No logs yet.</div>';return;}
+  const counts={};
+  logs.forEach(l=>l.symptoms?.forEach(s=>{counts[s]=(counts[s]||0)+1;}));
+  const sorted=Object.entries(counts).sort((a,b)=>b[1]-a[1]);
+  if(!sorted.length){el.innerHTML='<div class="empty">No symptoms tagged yet.</div>';return;}
+  el.innerHTML=`<div style="margin-bottom:16px;"><div class="section-label">Most frequent symptoms (all time)</div>
+  ${sorted.map(([s,c])=>`<div class="list-item"><div class="list-item-title">${s}</div><span class="badge badge-pink">${c} times</span></div>`).join('')}
+  </div>
+  <div><div class="section-label">Recent logs</div>
+  ${logs.slice(0,10).map(l=>`<div class="list-item">
+    <div><div class="list-item-title">${formatDate(l.date)}</div>
+    <div class="list-item-sub">${l.symptoms?.join(', ')||'No symptoms'}</div>
+    ${l.notes?`<div class="list-item-sub">${l.notes}</div>`:''}
+    </div>
+    <div style="display:flex;gap:4px;">
+    ${l.pain!==null&&l.pain!==undefined?`<span class="badge ${painBadgeClass(l.pain)}">Pain ${l.pain}</span>`:''}
+    ${l.mood?`<span class="badge badge-pink">${moodEmoji(l.mood)}</span>`:''}
+    ${l.phase?`<span class="badge badge-blue">${l.phase}</span>`:''}
+    </div>
+  </div>`).join('')}
+  </div>`;
+}
+
+// ── CHARTS ──
+let painChart, moodChart, symptomChart;
+
+function renderCharts() {
+  const logs=getData('logs').slice(0,30).reverse();
+  if(!logs.length) return;
+
+  const labels=logs.map(l=>formatDateShort(l.date));
+  const painData=logs.map(l=>l.pain!==null&&l.pain!==undefined?l.pain:null);
+  const moodData=logs.map(l=>l.mood||null);
+
+  if(painChart) painChart.destroy();
+  const pCtx=document.getElementById('pain-chart').getContext('2d');
+  painChart=new Chart(pCtx,{type:'line',data:{labels,datasets:[{label:'Pain',data:painData,borderColor:'#e8578a',backgroundColor:'rgba(232,87,138,0.1)',tension:0.3,fill:true,spanGaps:true,pointBackgroundColor:'#c73d6e',pointRadius:4}]},options:{responsive:true,maintainAspectRatio:false,scales:{y:{min:0,max:10,ticks:{stepSize:2}}},plugins:{legend:{display:false}}}});
+
+  if(moodChart) moodChart.destroy();
+  const mCtx=document.getElementById('mood-chart').getContext('2d');
+  moodChart=new Chart(mCtx,{type:'line',data:{labels,datasets:[{label:'Mood',data:moodData,borderColor:'#3a6ea8',backgroundColor:'rgba(58,110,168,0.1)',tension:0.3,fill:true,spanGaps:true,pointBackgroundColor:'#3a6ea8',pointRadius:4}]},options:{responsive:true,maintainAspectRatio:false,scales:{y:{min:1,max:7,ticks:{stepSize:1}}},plugins:{legend:{display:false}}}});
+
+  // Symptom bar
+  const counts={};
+  getData('logs').forEach(l=>l.symptoms?.forEach(s=>{counts[s]=(counts[s]||0)+1;}));
+  const top=Object.entries(counts).sort((a,b)=>b[1]-a[1]).slice(0,8);
+  if(symptomChart) symptomChart.destroy();
+  const sCtx=document.getElementById('symptom-bar-chart').getContext('2d');
+  symptomChart=new Chart(sCtx,{type:'bar',data:{labels:top.map(t=>t[0]),datasets:[{label:'Times logged',data:top.map(t=>t[1]),backgroundColor:'rgba(232,87,138,0.7)',borderColor:'#c73d6e',borderWidth:1}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{y:{beginAtZero:true}}}});
+}
+
+function renderLogCalendar() {
+  const cal=document.getElementById('log-calendar');
+  const logs=getData('logs');
+  const year=today.getFullYear(), month=today.getMonth();
+  const firstDay=new Date(year,month,1).getDay();
+  const daysInMonth=new Date(year,month+1,0).getDate();
+  const days=['Su','Mo','Tu','We','Th','Fr','Sa'];
+  cal.innerHTML=days.map(d=>`<div class="cal-header">${d}</div>`).join('');
+  for(let i=0;i<firstDay;i++) cal.innerHTML+=`<div></div>`;
+  for(let d=1;d<=daysInMonth;d++){
+    const dateStr=`${year}-${String(month+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
+    const isToday=dateStr===todayStr;
+    const log=logs.find(l=>l.date===dateStr);
+    let bg='var(--border)';
+    if(log&&log.pain!==null&&log.pain!==undefined){
+      if(log.pain>=7) bg='#ffd6e0';
+      else if(log.pain>=4) bg='#fff0d6';
+      else bg='#d6f5e3';
+    }
+    cal.innerHTML+=`<div class="cal-day ${isToday?'today':''}" style="${log?`background:${bg}`:''}" title="${log?`Pain: ${log.pain} · ${log.symptoms?.join(', ')||''}`:dateStr}">${d}</div>`;
+  }
+}
+
+function switchPatternTab(tab) {
+  document.querySelectorAll('.tabs .tab').forEach(t=>t.classList.remove('active'));
+  event.currentTarget.classList.add('active');
+  document.getElementById('pattern-charts').style.display=tab==='charts'?'block':'none';
+  document.getElementById('pattern-calendar').style.display=tab==='calendar'?'block':'none';
+  document.getElementById('pattern-insights').style.display=tab==='insights'?'block':'none';
+  if(tab==='charts') renderCharts();
+  if(tab==='calendar') renderLogCalendar();
+}
+
+// ── LORIS AI ──
+function buildLorisContext() {
+  const profile = getData('profile', {});
+  const name = profile.name || 'friend';
+  const healthNotes = profile.healthNotes || '';
+  return `You are Loris, a personal health buddy AI for ${name}. You are warm, funny, and clinically informed. You adapt your tone: gentle and warm when they're struggling, snarky and fun when they're in good spirits, precise and clinical when they need medical information.
+
+USER PROFILE:
+- Name: ${name}
+- Age: ${profile.age || 'not set'}
+- Location: ${profile.location || 'not set'}
+- Insurance: ${profile.insurance || 'not set'}
+- Emergency contact: ${profile.emergency || 'not set'}
+
+HEALTH NOTES (user-provided):
+${healthNotes || 'No health notes added yet — user can add these in Settings.'}
+
+PAIN SCALE (personal):
+${profile.painScale || 'Not customized yet.'}
+
+UPCOMING APPOINTMENTS:
+${getData('doctors', []).filter(d=>d.appt && new Date(d.appt) > new Date()).map(d=>`${d.name} (${d.specialty}) — ${d.appt}`).join('\n') || 'None upcoming.'}
+
+CURRENT MEDICATIONS:
+${getData('meds', []).map(m=>`${m.name} ${m.dose||''} (${m.type})`).join('\n') || 'None added yet.'}
+
+Respond in 2-4 paragraphs max. Be specific, warm, and genuinely helpful. Never be dismissive. Reference their actual logged data when relevant. Always encourage them to bring patterns to their doctor.`;
+}
+
+async function sendToLoris() {
+  const input=document.getElementById('loris-input');
+  const msg=input.value.trim();
+  if(!msg) return;
+  input.value='';
+  addMessage(msg,'user','loris-chat-messages');
+
+  const btn=document.getElementById('loris-send-btn');
+  btn.disabled=true; btn.textContent='...';
+
+  const logs=getData('logs').slice(0,14);
+  const logsStr=logs.length?`\n\nRECENT LOGS:\n${logs.map(l=>`${l.date}: Pain ${l.pain}, Mood ${l.mood}, Phase: ${l.phase||'?'}, Symptoms: ${l.symptoms?.join(',')||'none'}, Notes: ${l.notes||''}`).join('\n')}`:'';
+
+  const thinking=addMessage('Thinking<span class="loading-dots"></span>','loris','loris-chat-messages');
+
+  try {
+    const res=await fetch('https://api.anthropic.com/v1/messages',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({model:'claude-sonnet-4-20250514',max_tokens:1000,system:buildLorisContext()+logsStr,messages:[{role:'user',content:msg}]})});
+    const data=await res.json();
+    thinking.textContent=data.content?.[0]?.text||'Sorry, I had trouble responding. Try again!';
+  } catch(e) {
+    thinking.textContent="I'm having a little moment — try again in a second? 🫧";
+  }
+  btn.disabled=false; btn.textContent='Send';
+  scrollMessages('loris-chat-messages');
+}
+
+async function analyzePatterns() {
+  const el=document.getElementById('pattern-analysis');
+  el.innerHTML='Analyzing your patterns<span class="loading-dots"></span>';
+
+  const logs=getData('logs');
+  if(logs.length<3){el.textContent="I need at least 3 days of logs to spot patterns! Keep logging daily and I'll start seeing things. 🩷";return;}
+
+  const logsStr=logs.slice(0,30).map(l=>`${l.date}: Pain ${l.pain}, Mood ${l.mood}, Phase: ${l.phase||'?'}, Symptoms: ${l.symptoms?.join(',')||'none'}`).join('\n');
+
+  try {
+    const res=await fetch('https://api.anthropic.com/v1/messages',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({model:'claude-sonnet-4-20250514',max_tokens:1000,system:buildLorisContext(),messages:[{role:'user',content:`Analyze these health logs and identify patterns. Be specific about what you see — pain trends, cycle correlations, symptom clusters, anything clinically interesting. Be warm but precise.\n\nLOGS:\n${logsStr}`}]})});
+    const data=await res.json();
+    el.textContent=data.content?.[0]?.text||'Hmm, I had trouble analyzing. Try again!';
+  } catch(e) {
+    el.textContent="I had a little technical hiccup — try again in a moment? 🫧";
+  }
+}
+
+function quickPrompt(prompt) {
+  document.getElementById('loris-input').value=prompt;
+  sendToLoris();
+}
+
+function addMessage(text, type, containerId) {
+  const container=document.getElementById(containerId);
+  const div=document.createElement('div');
+  div.className=type==='user'?'user-bubble':'loris-bubble';
+  div.innerHTML=text;
+  container.appendChild(div);
+  scrollMessages(containerId);
+  return div;
+}
+
+function scrollMessages(id) {
+  const el=document.getElementById(id);
+  el.scrollTop=el.scrollHeight;
+}
+
+function updateLorisTip() {
+  const tips=["You logged today! I'm learning your patterns. 🩷","Keep logging — the more data, the better I understand you.","How are those omega-3s sitting? 🐟","Remember Dr. Morton on May 29th! 🩺","You're doing great. Seriously. 💪"];
+  document.getElementById('loris-tip').textContent=`"${tips[Math.floor(Math.random()*tips.length)]}"`;
+}
+
+// ── UTILS ──
+function formatDate(str){if(!str)return'';const d=new Date(str+'T12:00:00');return d.toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'});}
+function formatDateShort(str){if(!str)return'';const d=new Date(str+'T12:00:00');return d.toLocaleDateString('en-US',{month:'short',day:'numeric'});}
+function formatDateTime(str){if(!str)return'';const d=new Date(str);return d.toLocaleDateString('en-US',{month:'short',day:'numeric'})+' at '+d.toLocaleTimeString('en-US',{hour:'numeric',minute:'2-digit'});}
+function moodEmoji(m){return['','😩','😔','😐','🙂','😊','😄','🥰'][m]||''}
+function painBadgeClass(p){if(p>=7)return'badge-red';if(p>=4)return'badge-amber';return'badge-green';}
+
+// ── SETUP & SETTINGS ──
+function completeSetup() {
+  const name = document.getElementById('setup-name').value.trim();
+  if(!name) { alert('Please enter your name so Loris knows what to call you! 🩷'); return; }
+  const profile = {
+    name, age: document.getElementById('setup-age').value,
+    insurance: document.getElementById('setup-insurance').value,
+    location: document.getElementById('setup-location').value,
+    emergency: document.getElementById('setup-emergency').value,
+    healthNotes: document.getElementById('setup-health').value,
+    painScale: document.getElementById('setup-pain').value,
+    setupComplete: true
+  };
+  setData('profile', profile);
+  document.getElementById('setup-overlay').style.display='none';
+  document.getElementById('loris-tip').textContent=`"Hi ${name}! I'm so glad you're here. 🩷"`;
+  refreshDashboard();
+}
+
+function saveSettings() {
+  const profile = getData('profile', {});
+  profile.name = document.getElementById('settings-name').value;
+  profile.age = document.getElementById('settings-age').value;
+  profile.insurance = document.getElementById('settings-insurance').value;
+  profile.location = document.getElementById('settings-location').value;
+  profile.emergency = document.getElementById('settings-emergency').value;
+  profile.healthNotes = document.getElementById('settings-health').value;
+  profile.painScale = document.getElementById('settings-pain').value;
+  setData('profile', profile);
+  document.getElementById('settings-saved').style.display='flex';
+  setTimeout(()=>document.getElementById('settings-saved').style.display='none', 3000);
+}
+
+function loadSettingsForm() {
+  const profile = getData('profile', {});
+  document.getElementById('settings-name').value = profile.name||'';
+  document.getElementById('settings-age').value = profile.age||'';
+  document.getElementById('settings-insurance').value = profile.insurance||'';
+  document.getElementById('settings-location').value = profile.location||'';
+  document.getElementById('settings-emergency').value = profile.emergency||'';
+  document.getElementById('settings-health').value = profile.healthNotes||'';
+  document.getElementById('settings-pain').value = profile.painScale||'';
+}
+
+function resetAll() {
+  ['logs','meds','doctors','labs','cycle','profile'].forEach(k=>{ if(window._store) delete window._store[k]; try{window.storage?.delete(k);}catch(e){} });
+  location.reload();
+}
+
+// Update showPanel to load settings form
+const _origShowPanel = showPanel;
+showPanel = function(id) {
+  _origShowPanel(id);
+  if(id==='settings') loadSettingsForm();
+}
+
+// ── STARTUP ──
+async function init() {
+  await loadStore();
+  const profile = getData('profile', {});
+
+  // Show setup if first run
+  if(!profile.setupComplete) {
+    document.getElementById('setup-overlay').style.display='block';
+  }
+
+  refreshDashboard();
+  renderCycleCalendar();
+
+  // Update greeting with name
+  if(profile.name) {
+    document.getElementById('loris-tip').textContent=`"Hi ${profile.name}! I'm here whenever you need me. 🩷"`;
+  }
+
+  // Pre-populate known meds only if none exist
+  const meds=getData('meds');
+  if(!meds.length && profile.setupComplete){
+    setData('meds',[
+      {id:1,name:'Semaglutide',dose:'weekly injection',type:'prescribed',refill:'',pharmacy:'Doctor',notes:'80lb lost since Dec 2024'},
+      {id:2,name:'Atorvastatin',dose:'daily',type:'prescribed',refill:'',pharmacy:'Pharmacy',notes:'Cholesterol — huge improvement'},
+      {id:3,name:'Sertraline (Zoloft)',dose:'daily',type:'prescribed',refill:'',pharmacy:'Pharmacy',notes:'PMDD + anxiety'},
+      {id:4,name:'Yaz',dose:'daily',type:'prescribed',refill:'',pharmacy:'Pharmacy',notes:'PMDD — contains drospirenone'},
+      {id:5,name:'Nordic Naturals Algae Omega-3',dose:'2 softgels daily',type:'supplement',refill:'',pharmacy:'Amazon',notes:'Started May 2026 — no fish burps!'},
+      {id:6,name:'THC gummies',dose:'as needed',type:'otc',refill:'',pharmacy:'Dispensary',notes:'Anxiety + mood processing'},
+      {id:7,name:'Topical THC',dose:'as needed',type:'otc',refill:'',pharmacy:'Dispensary',notes:'Muscle pain — works great'},
+      {id:8,name:'Zyrtec (cetirizine)',dose:'as needed',type:'otc',refill:'',pharmacy:'Target/husband',notes:'Antihistamine — noticeably helps pain AND mood when taken consistently'},
+    ]);
+  }
+  const doctors=getData('doctors');
+  if(!doctors.length && profile.setupComplete){
+    setData('doctors',[{id:1,name:'Dr. Lasongia Morton',specialty:'Primary Care (MDLive)',phone:'',appt:'2026-05-29T09:45',portal:'MDLive app',notes:'First telehealth appt — bring health history doc!'}]);
+  }
+  const labs=getData('labs');
+  if(!labs.length && profile.setupComplete){
+    setData('labs',[
+      {id:1,name:'ANA Screen',result:'POSITIVE',ref:'NEGATIVE',date:'2024-12-31',status:'abnormal',notes:'Titer 1:40, homogeneous pattern — follow-up urgently needed'},
+      {id:2,name:'ESR (Sed Rate)',result:'31 mm/h',ref:'<20',date:'2024-12-31',status:'abnormal',notes:'Elevated — systemic inflammation confirmed'},
+      {id:3,name:'Hemoglobin A1c',result:'5.8%',ref:'<5.7%',date:'2024-12-31',status:'abnormal',notes:'Prediabetic range Dec 2024 — resolved by Aug 2025'},
+      {id:4,name:'Hemoglobin A1c',result:'5.4%',ref:'<5.7%',date:'2025-08-14',status:'normal',notes:'Fully resolved after semaglutide + weight loss'},
+      {id:5,name:'Total Cholesterol',result:'153',ref:'<200',date:'2025-08-14',status:'normal',notes:'Was 245 in Dec 2024 — dramatic improvement'},
+      {id:6,name:'LDL Cholesterol',result:'77',ref:'<100',date:'2025-08-14',status:'normal',notes:'Was 149 — resolved'},
+      {id:7,name:'Triglycerides',result:'184',ref:'<150',date:'2025-08-14',status:'abnormal',notes:'Still elevated — possible Yaz effect'},
+      {id:8,name:'Vitamin D',result:'78 ng/mL',ref:'30-100',date:'2025-08-14',status:'normal',notes:'Was 39 in Dec 2024 — excellent improvement'},
+      {id:9,name:'Anti-CCP',result:'PENDING',ref:'Negative',date:'2026-05-29',status:'pending',notes:'To be ordered by Dr. Morton May 29'},
+      {id:10,name:'Anti-SSA / Anti-SSB',result:'PENDING',ref:'Negative',date:'2026-05-29',status:'pending',notes:'Sjögren\'s markers — to be ordered May 29'},
+      {id:11,name:'TPO / TgAb',result:'PENDING',ref:'Negative',date:'2026-05-29',status:'pending',notes:'Thyroid antibodies — to be ordered May 29'},
+    ]);
+  }
+  refreshDashboard();
+}
+
+init();
+</script>
+</body>
+</html>
